@@ -354,7 +354,7 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 
     <!-- Random button + Archive button -->
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-ghost btn-sm" onclick="randomizeWeek()">
+      <button id="random_btn" class="btn btn-ghost btn-sm" onclick="randomizeWeek()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
         Випадкові 5 слів
       </button>
@@ -2322,7 +2322,7 @@ function getWeekDays(key) {
 function fmtD(d) { return d.toLocaleDateString('uk',{day:'numeric',month:'short'}); }
 function isToday(d) { return d.toDateString() === new Date().toDateString(); }
 function isFuture(d) { const t=new Date(); t.setHours(0,0,0,0); return d>t; }
-function findWord(eng) { return WORDS.find(w => w[0].toLowerCase()===eng.toLowerCase()); }
+function findWord(eng) { return WORDS.find(w => w?.[0].toLowerCase()===eng.toLowerCase()); }
 
 // ═══════════════════════════════════════════════════════════════
 // INDEXEDDB — архів вивчених слів
@@ -2448,11 +2448,18 @@ function saveLimit(v) {
   localStorage.setItem('ww_week_limit', v);
   document.getElementById('limitDisplay').textContent = v;
 }
+function renderWeekLimit() {
+  const btn = document.querySelector("#random_btn");
+  if (btn) {
+    btn.textContent = `Випадкові ${WEEK_LIMIT} слів`;
+  }
+}
 
 function changeWeekLimit(delta) {
   const n = Math.min(LIMIT_MAX, Math.max(LIMIT_MIN, WEEK_LIMIT + delta));
   if (n === WEEK_LIMIT) return;
   saveLimit(n);
+  renderWeekLimit();
   // If current week has fewer words than new limit, pad with random
   const data = loadWD();
   const wk   = data[WEEK_KEY];
@@ -2479,6 +2486,7 @@ document.getElementById('todayLabel').textContent =
 
 function ensureWeek() {
   const d = loadWD();
+  renderWeekLimit();
   if (!d[WEEK_KEY]) {
     const shuffled = [...WORDS].sort(() => Math.random()-.5);
     d[WEEK_KEY] = { words: shuffled.slice(0,WEEK_LIMIT).map(w=>w[0]) };
@@ -2584,22 +2592,14 @@ function renderWeek() {
   }).join('');
 
   // Add panel
-  const full = words.length >= WEEK_LIMIT;
-  document.getElementById('addTitle').textContent = full
-    ? `Додати слово (ліміт ${WEEK_LIMIT} досягнуто)`
-    : `Додати слово (залишилось ${WEEK_LIMIT-words.length})`;
-  document.getElementById('addInp').disabled = full;
-  document.getElementById('addInp').placeholder = full ? `Досягнуто ліміт ${WEEK_LIMIT} слів` : 'Пошук серед' + ' ' + WORDS.length + ' слів…';
-  if(full) {
-    document.getElementById('addResults').innerHTML = '';
-    document.getElementById('addHint').textContent = 'Видаліть слово щоб додати нове';
-  } else {
-    renderAddResults();
-    document.getElementById('addHint').textContent = addQuery ? '' : 'Введіть слово або переклад';
-  }
+  document.getElementById('addTitle').textContent = `Додати слово (зараз ${words.length} / ${WEEK_LIMIT})`;
+  document.getElementById('addInp').disabled = false;
+  document.getElementById('addInp').placeholder = 'Пошук серед ' + WORDS.length + ' слів…';
+  renderAddResults();
+  document.getElementById('addHint').textContent = addQuery ? '' : 'Введіть слово або переклад';
 }
 
-function esc(s) { return s.replace(/'/g,"\\'"); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,"\\'"); }
 
 function renderAddResults() {
   const data  = loadWD();
@@ -2630,10 +2630,13 @@ function onAddSearch(val) {
 function addWord(eng) {
   const data = loadWD();
   const wk   = data[WEEK_KEY];
-  if(wk.words.length>=5 || wk.words.includes(eng)) return;
+  if(wk.words.includes(eng)) return;
+  if(wk.words.length >= WEEK_LIMIT) {
+    saveLimit(Math.min(LIMIT_MAX, WEEK_LIMIT + 1));
+    renderWeekLimit();
+  }
   wk.words.push(eng);
   saveWD(data);
-  if(wk.words.length>=5) { addQuery=''; document.getElementById('addInp').value=''; }
   expandedSlot = null;
   renderWeek();
 }
@@ -2901,15 +2904,26 @@ async function finishQuiz(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MARK AS LEARNED (manual archive)
+// MARK AS LEARNED (manual archive — daily entry)
 // ═══════════════════════════════════════════════════════════════
 async function markLearned() {
   const data = loadWD();
   const wk   = data[WEEK_KEY];
   if (!wk?.words?.length) { alert('Немає слів для архівування.'); return; }
-  await archiveWeek(WEEK_KEY, wk.words);
-  // show toast
-  showToast('✓ Тиждень збережено в архів');
+
+  // daily key: d_YYYY-MM-DD (avoids collision with weekly Monday keys)
+  const todayKey   = 'd_' + TODAY.toISOString().slice(0, 10);
+  const todayLabel = TODAY.toLocaleDateString('uk', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+
+  const existing = await dbGet(STORE_WEEKS, todayKey);
+  await dbPut(STORE_WEEKS, {
+    weekKey  : todayKey,
+    label    : todayLabel,
+    words    : [...wk.words],
+    archived : new Date().toISOString(),
+    bestScore: existing?.bestScore || null,
+  });
+  showToast('✓ Слова збережено в архів на сьогодні');
 }
 
 function showToast(msg) {
@@ -2931,8 +2945,9 @@ async function renderArchive() {
   el.innerHTML = '<div class="arc-empty">Завантаження…</div>';
 
   let all = await dbGetAll(STORE_WEEKS);
-  // sort newest first
-  all.sort((a,b) => b.weekKey.localeCompare(a.weekKey));
+  // sort newest first (strip d_ prefix for comparison so daily entries sort correctly)
+  const sortKey = k => k.startsWith('d_') ? k.slice(2) : k;
+  all.sort((a,b) => sortKey(b.weekKey).localeCompare(sortKey(a.weekKey)));
 
   // apply search filter
   if (arcSearch) {
@@ -2957,7 +2972,7 @@ async function renderArchive() {
 
   el.innerHTML = `
     <div class="arc-stats">
-      <div class="arc-stat"><div class="n">${totalWeeks}</div><div class="l">Тижнів</div></div>
+      <div class="arc-stat"><div class="n">${totalWeeks}</div><div class="l">Записів</div></div>
       <div class="arc-stat"><div class="n">${totalWords}</div><div class="l">Слів вивчено</div></div>
     </div>
 
@@ -3124,11 +3139,11 @@ function wlGo(p) {
 function wlAddToWeek(eng) {
   const data = loadWD();
   const wk   = data[WEEK_KEY];
-  if (wk.words.length >= WEEK_LIMIT) {
-    showToast(`Ліміт ${WEEK_LIMIT} слів. Видаліть одне щоб додати нове.`);
-    return;
-  }
   if (!wk.words.includes(eng)) {
+    if (wk.words.length >= WEEK_LIMIT) {
+      saveLimit(Math.min(LIMIT_MAX, WEEK_LIMIT + 1));
+      renderWeekLimit();
+    }
     wk.words.push(eng);
     saveWD(data);
     showToast('✓ «' + eng + '» додано до тижня');
