@@ -312,6 +312,9 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 .iv-table tbody tr:hover{background:white;}
 .iv-table tbody tr:last-child{border-bottom:none;}
 .iv-table td{padding:9px 10px;font-size:14px;vertical-align:middle;}
+.iv-table td:not(:last-child){white-space:nowrap;}
+.iv-table td:not(:last-child) .iv-base,
+.iv-table td:not(:last-child) .iv-form{margin-right:4px;}
 .iv-base{font-family:'Playfair Display',serif;font-size:18px;}
 .iv-form{font-family:'DM Mono',monospace;font-size:14px;color:var(--ink);}
 .iv-uk{font-size:12px;color:var(--muted);font-style:italic;}
@@ -3387,6 +3390,20 @@ const IRREG_VERBS = [
   ["write","wrote","written","писати"],
 ];
 
+function ivSpeak(form) {
+  return form.split(' / ')[0].trim().replace(/'/g, "\\'");
+}
+
+function ivRow(v) {
+  const SZ = 'style="width:20px;height:20px;flex-shrink:0;"';
+  return `<tr>
+    <td><span class="iv-base">${v[0]}</span> <button class="icon-btn" ${SZ} onclick="speakWord('${ivSpeak(v[0])}',this)">${SPEAK_SVG}</button></td>
+    <td><span class="iv-form">${v[1]}</span> <button class="icon-btn" ${SZ} onclick="speakWord('${ivSpeak(v[1])}',this)">${SPEAK_SVG}</button></td>
+    <td><span class="iv-form">${v[2]}</span> <button class="icon-btn" ${SZ} onclick="speakWord('${ivSpeak(v[2])}',this)">${SPEAK_SVG}</button></td>
+    <td><span class="iv-uk">${v[3]}</span></td>
+  </tr>`;
+}
+
 function renderIrregVerbs() {
   const q = (document.getElementById('ivSearch')?.value || '').toLowerCase().trim();
   const filtered = q
@@ -3402,7 +3419,12 @@ function renderIrregVerbs() {
     return;
   }
 
-  // Group by first letter when not searching
+  const THEAD = '<table class="iv-table"><thead><tr>'
+    + '<th>Base form</th><th>Past Simple</th><th>Past Participle</th><th>Переклад</th>'
+    + '</tr></thead><tbody>';
+
+  let html = THEAD;
+
   if (!q) {
     const groups = {};
     filtered.forEach(v => {
@@ -3410,39 +3432,16 @@ function renderIrregVerbs() {
       if (!groups[letter]) groups[letter] = [];
       groups[letter].push(v);
     });
-
-    let html = '<table class="iv-table"><thead><tr>'
-      + '<th>Base form</th><th>Past Simple</th><th>Past Participle</th><th>Переклад</th>'
-      + '</tr></thead><tbody>';
-
     for (const letter of Object.keys(groups).sort()) {
       html += `<tr class="iv-letter-row"><td colspan="4" class="iv-letter-hdr">${letter}</td></tr>`;
-      for (const v of groups[letter]) {
-        html += `<tr>
-          <td><span class="iv-base">${v[0]}</span></td>
-          <td><span class="iv-form">${v[1]}</span></td>
-          <td><span class="iv-form">${v[2]}</span></td>
-          <td><span class="iv-uk">${v[3]}</span></td>
-        </tr>`;
-      }
+      for (const v of groups[letter]) html += ivRow(v);
     }
-    html += '</tbody></table>';
-    document.getElementById('ivList').innerHTML = html;
   } else {
-    let html = '<table class="iv-table"><thead><tr>'
-      + '<th>Base form</th><th>Past Simple</th><th>Past Participle</th><th>Переклад</th>'
-      + '</tr></thead><tbody>';
-    for (const v of filtered) {
-      html += `<tr>
-        <td><span class="iv-base">${v[0]}</span></td>
-        <td><span class="iv-form">${v[1]}</span></td>
-        <td><span class="iv-form">${v[2]}</span></td>
-        <td><span class="iv-uk">${v[3]}</span></td>
-      </tr>`;
-    }
-    html += '</tbody></table>';
-    document.getElementById('ivList').innerHTML = html;
+    for (const v of filtered) html += ivRow(v);
   }
+
+  html += '</tbody></table>';
+  document.getElementById('ivList').innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════════
