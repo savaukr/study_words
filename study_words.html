@@ -263,6 +263,20 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 }
 
 
+/* ════ IRREGULAR VERBS ════ */
+.iv-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.iv-table{width:100%;border-collapse:collapse;}
+.iv-table thead th{font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:8px 10px;border-bottom:1.5px solid var(--line);text-align:left;}
+.iv-table tbody tr{border-bottom:1px solid var(--cream);transition:background .12s;}
+.iv-table tbody tr:hover{background:white;}
+.iv-table tbody tr:last-child{border-bottom:none;}
+.iv-table td{padding:9px 10px;font-size:14px;vertical-align:middle;}
+.iv-base{font-family:'Playfair Display',serif;font-size:17px;}
+.iv-form{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);}
+.iv-uk{font-size:12px;color:var(--muted);font-style:italic;}
+.iv-letter-hdr{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);padding:14px 10px 4px;border-bottom:1px solid var(--gold-light);}
+.iv-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+
 /* ── Settings ── */
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);}
 .settings-row:last-child{border-bottom:none;padding-bottom:0;}
@@ -320,6 +334,7 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
     <button class="tab" onclick="switchTab('words')">📖 Всі слова</button>
     <button class="tab" onclick="switchTab('archive')">🗂 Архів</button>
     <button class="tab" onclick="switchTab('quiz')">🧠 Тест</button>
+    <button class="tab" onclick="switchTab('verbs')">🔤 Неправильні дієслова</button>
   </div>
 </div>
 
@@ -409,6 +424,20 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
   <!-- QUIZ VIEW -->
   <div class="view" id="view-quiz">
     <div class="qwrap" id="quizWrap"></div>
+  </div>
+
+  <!-- IRREGULAR VERBS VIEW -->
+  <div class="view" id="view-verbs">
+    <div class="card" style="padding:14px 18px;">
+      <div class="iv-controls">
+        <div style="position:relative;flex:1;min-width:160px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="ivSearch" class="search-inp" style="padding-left:32px;" placeholder="Пошук дієслова або перекладу…" oninput="renderIrregVerbs()" autocomplete="off">
+        </div>
+        <div id="ivCount" class="iv-count">200 дієслів</div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;" id="ivList"></div>
   </div>
 </main>
 
@@ -2499,13 +2528,15 @@ function ensureWeek() {
 // TAB SWITCHING
 // ═══════════════════════════════════════════════════════════════
 function switchTab(tab) {
+  const TABS = ['week','words','archive','quiz','verbs'];
   document.querySelectorAll('.tab').forEach((t,i) =>
-    t.classList.toggle('active', ['week','words','archive','quiz'][i]===tab));
-  ['week','words','archive','quiz'].forEach(v =>
+    t.classList.toggle('active', TABS[i]===tab));
+  TABS.forEach(v =>
     document.getElementById('view-'+v).classList.toggle('active', v===tab));
   if (tab === 'words')   renderWordList();
   if (tab === 'archive') renderArchive();
   if (tab === 'quiz' && !qz.active) showSetup();
+  if (tab === 'verbs')   renderIrregVerbs();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3148,6 +3179,228 @@ function wlAddToWeek(eng) {
     saveWD(data);
     showToast('✓ «' + eng + '» додано до тижня');
     renderWordList(); // refresh badges
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// IRREGULAR VERBS
+// ═══════════════════════════════════════════════════════════════
+
+// [base, past simple, past participle, ukrainian]
+const IRREG_VERBS = [
+  ["arise","arose","arisen","виникати, підніматися"],
+  ["awake","awoke","awoken","прокидатися"],
+  ["be","was / were","been","бути"],
+  ["bear","bore","born / borne","народжувати; нести"],
+  ["beat","beat","beaten","бити, перемагати"],
+  ["become","became","become","ставати"],
+  ["begin","began","begun","починати"],
+  ["bend","bent","bent","згинати, нахиляти"],
+  ["bet","bet","bet","ставити (на кін)"],
+  ["bid","bid","bid","пропонувати ціну"],
+  ["bind","bound","bound","зв'язувати"],
+  ["bite","bit","bitten","кусати"],
+  ["bleed","bled","bled","кровоточити"],
+  ["blow","blew","blown","дути"],
+  ["break","broke","broken","ламати"],
+  ["breed","bred","bred","розводити, вирощувати"],
+  ["bring","brought","brought","приносити"],
+  ["broadcast","broadcast","broadcast","транслювати"],
+  ["build","built","built","будувати"],
+  ["burn","burnt / burned","burnt / burned","горіти, палити"],
+  ["burst","burst","burst","вибухати, лопатися"],
+  ["buy","bought","bought","купувати"],
+  ["cast","cast","cast","кидати; грати роль"],
+  ["catch","caught","caught","ловити"],
+  ["choose","chose","chosen","вибирати"],
+  ["cling","clung","clung","чіплятися, прилипати"],
+  ["come","came","come","приходити"],
+  ["cost","cost","cost","коштувати"],
+  ["creep","crept","crept","повзати"],
+  ["cut","cut","cut","різати"],
+  ["deal","dealt","dealt","мати справу; розподіляти"],
+  ["dig","dug","dug","копати"],
+  ["do","did","done","робити"],
+  ["draw","drew","drawn","малювати; тягнути"],
+  ["dream","dreamt / dreamed","dreamt / dreamed","мріяти, снити"],
+  ["drink","drank","drunk","пити"],
+  ["drive","drove","driven","їхати, керувати"],
+  ["dwell","dwelt / dwelled","dwelt / dwelled","мешкати, проживати"],
+  ["eat","ate","eaten","їсти"],
+  ["fall","fell","fallen","падати"],
+  ["feed","fed","fed","годувати"],
+  ["feel","felt","felt","відчувати"],
+  ["fight","fought","fought","боротися, воювати"],
+  ["find","found","found","знаходити"],
+  ["flee","fled","fled","тікати"],
+  ["fling","flung","flung","жбурляти"],
+  ["fly","flew","flown","літати"],
+  ["forbid","forbade","forbidden","забороняти"],
+  ["forget","forgot","forgotten","забувати"],
+  ["forgive","forgave","forgiven","пробачати"],
+  ["freeze","froze","frozen","замерзати"],
+  ["get","got","got / gotten","отримувати, діставати"],
+  ["give","gave","given","давати"],
+  ["go","went","gone","іти, їхати"],
+  ["grind","ground","ground","молоти, перетирати"],
+  ["grow","grew","grown","рости, вирощувати"],
+  ["hang","hung","hung","вішати"],
+  ["have","had","had","мати"],
+  ["hear","heard","heard","чути"],
+  ["hide","hid","hidden","ховати"],
+  ["hit","hit","hit","вдаряти, влучати"],
+  ["hold","held","held","тримати"],
+  ["hurt","hurt","hurt","ранити, боліти"],
+  ["keep","kept","kept","зберігати, тримати"],
+  ["kneel","knelt / kneeled","knelt / kneeled","ставати навколішках"],
+  ["knit","knit / knitted","knit / knitted","в'язати"],
+  ["know","knew","known","знати"],
+  ["lay","laid","laid","класти (горизонтально)"],
+  ["lead","led","led","вести, очолювати"],
+  ["lean","leant / leaned","leant / leaned","нахилятися"],
+  ["leap","leapt / leaped","leapt / leaped","стрибати"],
+  ["learn","learnt / learned","learnt / learned","вчитися, дізнатися"],
+  ["leave","left","left","залишати, їхати"],
+  ["lend","lent","lent","позичати (комусь)"],
+  ["let","let","let","дозволяти"],
+  ["lie","lay","lain","лежати"],
+  ["light","lit / lighted","lit / lighted","запалювати, освітлювати"],
+  ["lose","lost","lost","губити, програвати"],
+  ["make","made","made","робити, виготовляти"],
+  ["mean","meant","meant","означати"],
+  ["meet","met","met","зустрічати"],
+  ["mistake","mistook","mistaken","помилятися"],
+  ["overcome","overcame","overcome","долати, перемагати"],
+  ["overtake","overtook","overtaken","обганяти, наздоганяти"],
+  ["pay","paid","paid","платити"],
+  ["put","put","put","класти, ставити"],
+  ["quit","quit","quit","кидати, залишати"],
+  ["read","read","read","читати"],
+  ["rebuild","rebuilt","rebuilt","відбудовувати"],
+  ["redo","redid","redone","переробляти"],
+  ["ride","rode","ridden","їхати верхи, їздити"],
+  ["ring","rang","rung","дзвонити"],
+  ["rise","rose","risen","підніматися, вставати"],
+  ["run","ran","run","бігти"],
+  ["saw","sawed","sawn / sawed","пиляти"],
+  ["say","said","said","говорити, казати"],
+  ["see","saw","seen","бачити"],
+  ["seek","sought","sought","шукати, прагнути"],
+  ["sell","sold","sold","продавати"],
+  ["send","sent","sent","надсилати, відправляти"],
+  ["set","set","set","встановлювати, класти"],
+  ["shake","shook","shaken","трясти, стрясати"],
+  ["shed","shed","shed","скидати; проливати (сльози)"],
+  ["shine","shone / shined","shone / shined","сяяти, світити"],
+  ["shoot","shot","shot","стріляти"],
+  ["show","showed","shown / showed","показувати"],
+  ["shrink","shrank","shrunk","стискатися, усихати"],
+  ["shut","shut","shut","зачиняти"],
+  ["sing","sang","sung","співати"],
+  ["sink","sank","sunk","тонути, занурюватися"],
+  ["sit","sat","sat","сидіти"],
+  ["sleep","slept","slept","спати"],
+  ["slide","slid","slid","ковзати"],
+  ["smell","smelt / smelled","smelt / smelled","нюхати, пахнути"],
+  ["sow","sowed","sown / sowed","сіяти"],
+  ["speak","spoke","spoken","говорити, розмовляти"],
+  ["speed","sped / speeded","sped / speeded","мчати, прискорюватися"],
+  ["spell","spelt / spelled","spelt / spelled","вимовляти по буквах"],
+  ["spend","spent","spent","витрачати; проводити (час)"],
+  ["spill","spilt / spilled","spilt / spilled","проливати"],
+  ["spin","spun","spun","крутити, прясти"],
+  ["spit","spat / spit","spat / spit","плюватися"],
+  ["split","split","split","розщеплювати, ділити"],
+  ["spoil","spoilt / spoiled","spoilt / spoiled","псувати, розбещувати"],
+  ["spread","spread","spread","поширювати, розстилати"],
+  ["spring","sprang","sprung","стрибати"],
+  ["stand","stood","stood","стояти"],
+  ["steal","stole","stolen","красти"],
+  ["stick","stuck","stuck","прилипати; встромляти"],
+  ["sting","stung","stung","жалити, пекти"],
+  ["stink","stank","stunk","смердіти"],
+  ["strike","struck","struck / stricken","вдаряти; страйкувати"],
+  ["swear","swore","sworn","клястися; лаятися"],
+  ["sweep","swept","swept","підмітати"],
+  ["swim","swam","swum","плавати"],
+  ["swing","swung","swung","гойдати, розгойдуватися"],
+  ["take","took","taken","брати, забирати"],
+  ["teach","taught","taught","навчати"],
+  ["tear","tore","torn","рвати"],
+  ["tell","told","told","розповідати, говорити"],
+  ["think","thought","thought","думати, вважати"],
+  ["throw","threw","thrown","кидати, жбурляти"],
+  ["understand","understood","understood","розуміти"],
+  ["undertake","undertook","undertaken","братися за справу"],
+  ["undo","undid","undone","скасовувати, розв'язувати"],
+  ["upset","upset","upset","засмучувати, перекидати"],
+  ["wake","woke","woken","прокидатися; будити"],
+  ["wear","wore","worn","носити (одяг)"],
+  ["weave","wove","woven","ткати, плести"],
+  ["weep","wept","wept","плакати"],
+  ["win","won","won","вигравати, перемагати"],
+  ["wind","wound","wound","намотувати; повертати"],
+  ["withdraw","withdrew","withdrawn","відкликати; знімати (гроші)"],
+  ["withstand","withstood","withstood","витримувати, протистояти"],
+  ["wring","wrung","wrung","вичавлювати, крутити"],
+  ["write","wrote","written","писати"],
+];
+
+function renderIrregVerbs() {
+  const q = (document.getElementById('ivSearch')?.value || '').toLowerCase().trim();
+  const filtered = q
+    ? IRREG_VERBS.filter(v =>
+        v[0].includes(q) || v[1].includes(q) || v[2].includes(q) || v[3].toLowerCase().includes(q))
+    : IRREG_VERBS;
+
+  document.getElementById('ivCount').textContent = filtered.length + ' дієслів';
+
+  if (filtered.length === 0) {
+    document.getElementById('ivList').innerHTML =
+      '<div style="text-align:center;padding:40px;font-family:Playfair Display,serif;font-style:italic;color:var(--muted);font-size:18px;">Нічого не знайдено</div>';
+    return;
+  }
+
+  // Group by first letter when not searching
+  if (!q) {
+    const groups = {};
+    filtered.forEach(v => {
+      const letter = v[0][0].toUpperCase();
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push(v);
+    });
+
+    let html = '<table class="iv-table"><thead><tr>'
+      + '<th>Base form</th><th>Past Simple</th><th>Past Participle</th><th>Переклад</th>'
+      + '</tr></thead><tbody>';
+
+    for (const letter of Object.keys(groups).sort()) {
+      html += `<tr><td colspan="4" class="iv-letter-hdr">${letter}</td></tr>`;
+      for (const v of groups[letter]) {
+        html += `<tr>
+          <td><span class="iv-base">${v[0]}</span></td>
+          <td><span class="iv-form">${v[1]}</span></td>
+          <td><span class="iv-form">${v[2]}</span></td>
+          <td><span class="iv-uk">${v[3]}</span></td>
+        </tr>`;
+      }
+    }
+    html += '</tbody></table>';
+    document.getElementById('ivList').innerHTML = html;
+  } else {
+    let html = '<table class="iv-table"><thead><tr>'
+      + '<th>Base form</th><th>Past Simple</th><th>Past Participle</th><th>Переклад</th>'
+      + '</tr></thead><tbody>';
+    for (const v of filtered) {
+      html += `<tr>
+        <td><span class="iv-base">${v[0]}</span></td>
+        <td><span class="iv-form">${v[1]}</span></td>
+        <td><span class="iv-form">${v[2]}</span></td>
+        <td><span class="iv-uk">${v[3]}</span></td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('ivList').innerHTML = html;
   }
 }
 
