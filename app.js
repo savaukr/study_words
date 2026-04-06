@@ -2930,7 +2930,7 @@ async function showSetup() {
   const archive = await archivePool();
   const bests   = await loadBest();
   const bk      = bestKey();
-  const srcCount = qz.src==='week' ? week.length : archive.length;
+  const srcCount = qz.src==='week' ? week.length : qz.src==='archive' ? archive.length : WORDS.length;
 
   document.getElementById('quizWrap').innerHTML = `
     <div class="setup-card fade-up">
@@ -2952,6 +2952,7 @@ async function showSetup() {
       <div class="src-row">
         <div class="schip ${qz.src==='week'?'active':''}" onclick="setSrc('week',this)">Слова тижня (${week.length})</div>
         <div class="schip ${qz.src==='archive'?'active':''}" onclick="setSrc('archive',this)">Архів (${archive.length})</div>
+        <div class="schip ${qz.src==='all'?'active':''}" onclick="setSrc('all',this)">Всі слова (${WORDS.length})</div>
       </div>
 
       <div class="stats-row">
@@ -2980,11 +2981,12 @@ async function startQuiz() {
   let pool;
   if (qz.src === 'week') {
     pool = weekPool();
-  } else {
+  } else if (qz.src === 'archive') {
     pool = await archivePool();
-    qz._archiveCache = pool;
+  } else {
+    pool = [...WORDS];
   }
-  if (pool.length < 2) { alert('Замало слів. Додайте слова до тижня або перенесіть тижні в архів.'); return; }
+  if (pool.length < 2) { alert('Замало слів для тесту.'); return; }
   const limit = qz.src === 'week' ? pool.length : Math.min(20, pool.length);
   const words = [...pool].sort(()=>Math.random()-.5).slice(0, limit);
   qState = { words, idx:0, correct:0, answered:false };
@@ -3144,7 +3146,7 @@ async function finishQuiz(){
   }
   const emoji=pct>=80?'🌟':pct>=60?'📚':'💪';
   const modeLabel=qz.mode==='en-uk'?'EN → Укр':qz.mode==='uk-en'?'Укр → EN (друк)':'Укр → EN (голос)';
-  const srcLabel=qz.src==='week'?'слова тижня':'архів';
+  const srcLabel=qz.src==='week'?'слова тижня':qz.src==='archive'?'архів':'всі слова';
   const archiveNote=qz.src==='week'&&pct>=60?'<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--sage);margin-bottom:12px;">✓ Тиждень збережено в архів</div>':''
   document.getElementById('quizWrap').innerHTML=`
     <div class="result-card fade-up">
