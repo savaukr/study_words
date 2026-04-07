@@ -143,6 +143,7 @@ let addQuery     = '';
 // ── Settings ──────────────────────────────────────────────────
 let WEEK_LIMIT = parseInt(localStorage.getItem('ww_week_limit') || '5');
 let WORD_LEVEL = localStorage.getItem('ww_word_level') || 'b1-b2';
+let WORD_LANG  = localStorage.getItem('ww_word_lang')  || 'en';
 
 function saveLevel(level) {
   WORD_LEVEL = level;
@@ -150,7 +151,25 @@ function saveLevel(level) {
 }
 
 function wordsJsonFile() {
-  return 'words-' + WORD_LEVEL + '.json';
+  const prefix = WORD_LANG === 'en' ? '' : WORD_LANG + '-';
+  return prefix + 'words-' + WORD_LEVEL + '.json';
+}
+
+async function changeLang(lang) {
+  if (lang === WORD_LANG) return;
+  WORD_LANG = lang;
+  localStorage.setItem('ww_word_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang));
+  try {
+    const data = await fetch(wordsJsonFile()).then(r => r.json());
+    WORDS = data;
+    document.getElementById('totalWordsChip').textContent = WORDS.length + ' слів';
+  } catch(e) {
+    alert('Файл слів для мови "' + lang + '" не знайдено.');
+    return;
+  }
+  renderWeek();
 }
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 20;
@@ -1142,6 +1161,8 @@ fetch(wordsJsonFile())
       document.getElementById('totalWordsChip').textContent = WORDS.length + ' слів';
       document.querySelectorAll('.level-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.level === WORD_LEVEL));
+      document.querySelectorAll('.lang-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.lang === WORD_LANG));
       renderWeek();
     }).catch(err => {
       console.error('IndexedDB error:', err);
