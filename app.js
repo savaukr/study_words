@@ -161,6 +161,10 @@ async function changeLang(lang) {
   localStorage.setItem('ww_word_lang', lang);
   document.querySelectorAll('.lang-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.lang === lang));
+  document.getElementById('verbsTab').style.display = lang === 'de' ? 'none' : '';
+  if (lang === 'de' && document.getElementById('view-verbs').classList.contains('active')) {
+    switchTab('week');
+  }
   try {
     const data = await fetch(wordsJsonFile()).then(r => r.json());
     WORDS = data;
@@ -169,7 +173,11 @@ async function changeLang(lang) {
     alert('Файл слів для мови "' + lang + '" не знайдено.');
     return;
   }
-  renderWeek();
+  const activeTab = (document.querySelector('.view.active') || {}).id?.replace('view-', '') || 'week';
+  if (activeTab === 'week')    renderWeek();
+  if (activeTab === 'words')   renderWordList();
+  if (activeTab === 'archive') renderArchive();
+  if (activeTab === 'quiz')    showSetup();
 }
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 20;
@@ -1163,6 +1171,7 @@ fetch(wordsJsonFile())
         b.classList.toggle('active', b.dataset.level === WORD_LEVEL));
       document.querySelectorAll('.lang-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.lang === WORD_LANG));
+      document.getElementById('verbsTab').style.display = WORD_LANG === 'de' ? 'none' : '';
       renderWeek();
     }).catch(err => {
       console.error('IndexedDB error:', err);
