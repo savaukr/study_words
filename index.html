@@ -36,10 +36,21 @@
     </div>
     <div class="settings-row">
       <div>
+        <div class="settings-label">Рівень слів</div>
+        <div class="settings-sub">База слів відповідного CEFR-рівня</div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="level-btn" onclick="changeLevel('a1-a2')" data-level="a1-a2">A1–A2</button>
+        <button class="level-btn" onclick="changeLevel('b1-b2')" data-level="b1-b2">B1–B2</button>
+        <button class="level-btn" onclick="changeLevel('c1-c2')" data-level="c1-c2">C1–C2</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div>
         <div class="settings-label">База слів</div>
         <div class="settings-sub">Загальна кількість доступних слів</div>
       </div>
-      <div class="info-chip" id="totalWordsChip">1865 слів</div>
+      <div class="info-chip" id="totalWordsChip">слів</div>
     </div>
   </div>
 </div>

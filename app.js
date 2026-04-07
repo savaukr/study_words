@@ -142,6 +142,16 @@ let addQuery     = '';
 
 // ── Settings ──────────────────────────────────────────────────
 let WEEK_LIMIT = parseInt(localStorage.getItem('ww_week_limit') || '5');
+let WORD_LEVEL = localStorage.getItem('ww_word_level') || 'b1-b2';
+
+function saveLevel(level) {
+  WORD_LEVEL = level;
+  localStorage.setItem('ww_word_level', level);
+}
+
+function wordsJsonFile() {
+  return 'words-' + WORD_LEVEL + '.json';
+}
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 20;
 
@@ -155,6 +165,27 @@ function renderWeekLimit() {
   if (btn) {
     btn.textContent = `Випадкові ${WEEK_LIMIT} слів`;
   }
+}
+
+async function changeLevel(level) {
+  if (level === WORD_LEVEL) return;
+  saveLevel(level);
+  WORDS = [];
+  document.querySelectorAll('.level-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.level === level));
+  try {
+    const data = await fetch(wordsJsonFile()).then(r => r.json());
+    WORDS = data;
+    document.getElementById('totalWordsChip').textContent = WORDS.length + ' слів';
+  } catch(e) {
+    alert('Файл слів для рівня ' + level + ' не знайдено.');
+    return;
+  }
+  renderWeek();
+}
+
+function levelLabel(l) {
+  return l === 'a1-a2' ? 'A1–A2' : l === 'b1-b2' ? 'B1–B2' : 'C1–C2';
 }
 
 function changeWeekLimit(delta) {
@@ -1100,7 +1131,7 @@ function renderIrregVerbs() {
 // ═══════════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════════
-fetch('words.json')
+fetch(wordsJsonFile())
   .then(r => r.json())
   .then(data => { WORDS = data; })
   .catch(() => console.error('Не вдалося завантажити words.json'))
@@ -1109,6 +1140,8 @@ fetch('words.json')
       await migrateOldWeeks();
       document.getElementById('limitDisplay').textContent = WEEK_LIMIT;
       document.getElementById('totalWordsChip').textContent = WORDS.length + ' слів';
+      document.querySelectorAll('.level-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.level === WORD_LEVEL));
       renderWeek();
     }).catch(err => {
       console.error('IndexedDB error:', err);
