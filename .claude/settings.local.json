@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(node:*)",
+      "Bash(ls -la \"D:/temp_resource/english_word/\"*.json \"D:/temp_resource/english_word/\"*.js \"D:/temp_resource/english_word/\"*.html \"D:/temp_resource/english_word/\"*.css)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Read(//d/tmp/**)",
+      "Read(//c/Users/vpachevskyi/AppData/Local/Temp/**)"
+    ]
+  }
+}
