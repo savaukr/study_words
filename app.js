@@ -844,7 +844,7 @@ function renderWordList() {
   const q = wlSearch.toLowerCase().trim();
   const filtered = WORDS.filter(w => {
     if (wlPos && w[1] !== wlPos) return false;
-    if (q && !w[0].toLowerCase().includes(q) && !w[2].toLowerCase().includes(q)) return false;
+    if (q && !w?.[0].toLowerCase().includes(q) && !w?.[2].toLowerCase().includes(q)) return false;
     return true;
   });
 
@@ -1177,4 +1177,4 @@ fetch(wordsJsonFile())
       console.error('IndexedDB error:', err);
       renderWeek();
     });
-  });
+  });
