@@ -225,7 +225,7 @@ function changeWeekLimit(delta) {
   const wk   = data[WEEK_KEY];
   if (wk && wk.words.length < n) {
     const taken = new Set(wk.words.map(w=>w.toLowerCase()));
-    const pool  = WORDS.filter(w=>!taken.has(w[0].toLowerCase()));
+    const pool  = WORDS.filter(w=>!taken.has(w?.[0].toLowerCase()));
     const shuffled = pool.sort(()=>Math.random()-.5);
     while (wk.words.length < n && shuffled.length) {
       wk.words.push(shuffled.shift()[0]);
@@ -249,7 +249,7 @@ function ensureWeek() {
   renderWeekLimit();
   if (!d[WEEK_KEY]) {
     const shuffled = [...WORDS].sort(() => Math.random()-.5);
-    d[WEEK_KEY] = { words: shuffled.slice(0,WEEK_LIMIT).map(w=>w[0]) };
+    d[WEEK_KEY] = { words: shuffled.slice(0,WEEK_LIMIT).map(w=>w?.[0]) };
     saveWD(d);
   }
   return d;
@@ -337,15 +337,15 @@ function renderWeek() {
     return `<div class="wslot">
       <div class="wslot-num">${i+1}</div>
       <div class="wslot-body" onclick="expandedSlot=${exp?'null':i};renderWeek()">
-        <div class="wslot-en">${w[0]}</div>
-        <div class="wslot-pos">${POS_LABELS[w[1]]||w[1]}</div>
-        <div class="wslot-uk">${w[2]}</div>
+        <div class="wslot-en">${w?.[0]}</div>
+        <div class="wslot-pos">${POS_LABELS[w?.[1]]||w?.[1]}</div>
+        <div class="wslot-uk">${w?.[2]}</div>
         ${exp ? `<div class="wslot-detail">
           <p style="font-size:14px;color:var(--muted);font-style:italic;">Натисни 🔊 щоб почути вимову</p>
         </div>` : ''}
       </div>
       <div class="wslot-actions">
-        <button class="icon-btn" onclick="speakWord('${esc(w[0])}',this)" title="Вимовити">${SPEAK_SVG}</button>
+        <button class="icon-btn" onclick="speakWord('${esc(w?.[0])}',this)" title="Вимовити">${SPEAK_SVG}</button>
         <button class="icon-btn danger" onclick="removeWord(${i})" title="Видалити">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -370,15 +370,15 @@ function renderAddResults() {
   const el    = document.getElementById('addResults');
   if(!q) { el.innerHTML=''; return; }
   const hits = WORDS.filter(w =>
-    (w[0].toLowerCase().includes(q) || w[2].toLowerCase().includes(q)) && !taken.includes(w[0])
+    (w?.[0].toLowerCase().includes(q) || w?.[2].toLowerCase().includes(q)) && !taken.includes(w?.[0])
   ).slice(0,14);
   el.innerHTML = hits.length ? hits.map(w => `
     <div class="add-row">
       <div>
-        <div class="add-row-en">${w[0]}</div>
-        <div class="add-row-uk">${w[2]}</div>
+        <div class="add-row-en">${w?.[0]}</div>
+        <div class="add-row-uk">${w?.[2]}</div>
       </div>
-      <button class="btn btn-sm" onclick="addWord('${esc(w[0])}')">+ Додати</button>
+      <button class="btn btn-sm" onclick="addWord('${esc(w?.[0])}')">+ Додати</button>
     </div>`).join('')
     : `<div class="hint">Нічого не знайдено</div>`;
   document.getElementById('addHint').textContent = '';
@@ -414,7 +414,7 @@ function removeWord(idx) {
 function randomizeWeek() {
   const data = loadWD();
   const shuffled = [...WORDS].sort(()=>Math.random()-.5);
-  data[WEEK_KEY] = { words: shuffled.slice(0,WEEK_LIMIT).map(w=>w[0]) };
+  data[WEEK_KEY] = { words: shuffled.slice(0,WEEK_LIMIT).map(w=>w?.[0]) };
   expandedSlot = null; addQuery = '';
   document.getElementById('addInp').value = '';
   saveWD(data);
@@ -535,26 +535,26 @@ function renderQCard() {
     body = `
       <div class="qhint">Перекладіть українською</div>
       <div class="qword-row">
-        <div class="qword-en">${w[0]}</div>
-        <button class="icon-btn" onclick="speakWord('${esc(w[0])}',this)">${SPEAK_SVG}</button>
+        <div class="qword-en">${w?.[0]}</div>
+        <button class="icon-btn" onclick="speakWord('${esc(w?.[0])}',this)">${SPEAK_SVG}</button>
       </div>
-      <div class="qphon">${POS_LABELS[w[1]]||''}</div>
+      <div class="qphon">${POS_LABELS[w?.[1]]||''}</div>
       <input class="qinput" id="qinp" placeholder="Ваш переклад…" autocomplete="off" onkeydown="if(event.key==='Enter')checkAns()">
       <div id="qfb"></div>
       <div class="qnav"><button class="btn" id="qbtn" onclick="checkAns()">Перевірити</button></div>`;
   } else if(isType) {
     body = `
       <div class="qhint">Напишіть англійською</div>
-      <div class="qword-uk" style="margin-bottom:6px;">${w[2]}</div>
-      <div class="qphon">${POS_LABELS[w[1]]||''}</div>
+      <div class="qword-uk" style="margin-bottom:6px;">${w?.[2]}</div>
+      <div class="qphon">${POS_LABELS[w?.[1]]||''}</div>
       <input class="qinput" id="qinp" placeholder="Type in English…" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkAns()">
       <div id="qfb"></div>
       <div class="qnav"><button class="btn" id="qbtn" onclick="checkAns()">Перевірити</button></div>`;
   } else {
     body = `
       <div class="qhint">Вимовте англійською</div>
-      <div class="qword-uk" style="margin-bottom:6px;">${w[2]}</div>
-      <div class="qphon">${POS_LABELS[w[1]]||''}</div>
+      <div class="qword-uk" style="margin-bottom:6px;">${w?.[2]}</div>
+      <div class="qphon">${POS_LABELS[w?.[1]]||''}</div>
       <div class="mic-area">
         <div class="mic-heard" id="micHeard">—</div>
         <button class="mic-btn" id="micBtn" onclick="toggleMic()">
@@ -603,11 +603,11 @@ function checkAns() {
   const ans  = (document.getElementById('qinp')?.value||'').trim().toLowerCase();
   const w    = qState.words[qState.idx];
   const isEn = qz.mode==='en-uk';
-  const correctRaw = isEn ? w[2] : w[0];
+  const correctRaw = isEn ? w?.[2] : w?.[0];
   const correct    = correctRaw.toLowerCase();
   const ok = ans.length>0 && fuzzyMatch(ans, correct);
   qState.answered=true;
-  if(ok){ qState.correct++; setTimeout(()=>speakWord(w[0],null),200); }
+  if(ok){ qState.correct++; setTimeout(()=>speakWord(w?.[0],null),200); }
   const fb  = document.getElementById('qfb');
   const btn = document.getElementById('qbtn');
   fb.innerHTML = ok
@@ -644,15 +644,15 @@ function checkVoice(spoken){
   if(qState.answered) return;
   stopMic();
   const w=qState.words[qState.idx];
-  const target=w[0].toLowerCase(), said=spoken.trim().toLowerCase();
+  const target=w?.[0].toLowerCase(), said=spoken.trim().toLowerCase();
   const ok=said.length>0 && fuzzyMatch(said, target);
   qState.answered=true;
-  if(ok){ qState.correct++; speakWord(w[0],null); }
+  if(ok){ qState.correct++; speakWord(w?.[0],null); }
   const ms=document.getElementById('micStat'); if(ms) ms.textContent='Ви сказали: "'+spoken+'"';
   const fb=document.getElementById('qfb');
   fb.innerHTML=ok
-    ?`<div class="qfb ok">✓ Правильно! <em>${w[0]}</em></div>`
-    :`<div class="qfb no">✗ Відповідь: <em>${w[0]}</em> <button class="icon-btn" style="display:inline-flex;" onclick="speakWord('${esc(w[0])}',this)">${SPEAK_SVG}</button></div>`;
+    ?`<div class="qfb ok">✓ Правильно! <em>${w?.[0]}</em></div>`
+    :`<div class="qfb no">✗ Відповідь: <em>${w?.[0]}</em> <button class="icon-btn" style="display:inline-flex;" onclick="speakWord('${esc(w?.[0])}',this)">${SPEAK_SVG}</button></div>`;
   const skip=document.querySelector('.btn-outline'); if(skip) skip.style.display='none';
   const nb=document.getElementById('qbtn'); if(nb){ nb.style.display='inline-flex'; nb.textContent=qState.idx+1<qState.words.length?'Далі →':'Результат →'; }
 }
@@ -754,7 +754,7 @@ async function renderArchive() {
       ...rec,
       words: rec.words.filter(eng => {
         const w = findWord(eng);
-        return w && (w[0].toLowerCase().includes(q) || w[2].toLowerCase().includes(q));
+        return w && (w?.[0].toLowerCase().includes(q) || w?.[2].toLowerCase().includes(q));
       })
     })).filter(r => r.words.length > 0);
   }
@@ -801,12 +801,12 @@ async function renderArchive() {
             return `<div class="arc-word-row">
               <div>
                 <div class="arc-word-en">
-                  ${w[0]}
-                  <button class="icon-btn" style="width:22px;height:22px;" onclick="speakWord('${w[0].replace(/'/g,"\'")}',this)">${SPEAK_SVG}</button>
+                  ${w?.[0]}
+                  <button class="icon-btn" style="width:22px;height:22px;" onclick="speakWord('${w?.[0].replace(/'/g,"\'")}',this)">${SPEAK_SVG}</button>
                 </div>
-                <div class="arc-word-pos">${POS_LABELS[w[1]]||w[1]}</div>
+                <div class="arc-word-pos">${POS_LABELS[w?.[1]]||w?.[1]}</div>
               </div>
-              <div class="arc-word-uk">${w[2]}</div>
+              <div class="arc-word-uk">${w?.[2]}</div>
             </div>`;
           }).join('')}
         </div>
@@ -854,7 +854,7 @@ function renderWordList() {
   // filter
   const q = wlSearch.toLowerCase().trim();
   const filtered = WORDS.filter(w => {
-    if (wlPos && w[1] !== wlPos) return false;
+    if (wlPos && w?.[1] !== wlPos) return false;
     if (q && !w?.[0].toLowerCase().includes(q) && !w?.[2].toLowerCase().includes(q)) return false;
     return true;
   });
@@ -874,15 +874,15 @@ function renderWordList() {
     slice.length === 0
       ? '<div style="text-align:center;padding:40px;font-family:Playfair Display,serif;font-style:italic;color:var(--muted);font-size:18px;">Нічого не знайдено</div>'
       : `<div class="wl-grid">${slice.map(w => {
-          const inWeek = wlWeekSet.has(w[0].toLowerCase());
-          const eWord  = w[0].replace(/'/g,"\'");
+          const inWeek = wlWeekSet.has(w?.[0].toLowerCase());
+          const eWord  = w?.[0].replace(/'/g,"\'");
           return `<div class="wl-card">
             <div class="wl-en">
-              ${w[0]}
+              ${w?.[0]}
               <button class="icon-btn" style="width:22px;height:22px;flex-shrink:0;" onclick="speakWord('${eWord}',this)">${SPEAK_SVG}</button>
             </div>
-            <div class="wl-pos">${POS_FULL[w[1]]||w[1]}</div>
-            <div class="wl-uk">${w[2]}</div>
+            <div class="wl-pos">${POS_FULL[w?.[1]]||w?.[1]}</div>
+            <div class="wl-uk">${w?.[2]}</div>
             ${inWeek
               ? '<div class="wl-week-badge">✓ Цього тижня</div>'
               : `<button class="btn btn-ghost btn-sm" style="font-size:9px;padding:4px 8px;margin-top:4px;align-self:flex-start;" onclick="wlAddToWeek('${eWord}')">+ До тижня</button>`
