@@ -93,7 +93,7 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 .wslot.empty{border-style:dashed;background:transparent;align-items:center;}
 .wslot-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--line);min-width:16px;padding-top:3px;}
 .wslot-body{flex:1;cursor:pointer;}
-.wslot-en{font-family:'Playfair Display',serif;font-size:21px;line-height:1;}
+.wslot-en{font-family:'Playfair Display',serif;font-size:21px;line-height:1;color:#253761;}
 .wslot-pos{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);text-transform:uppercase;letter-spacing:.09em;margin-top:2px;}
 .wslot-uk{font-size:13px;color:var(--muted);font-style:italic;margin-top:4px;}
 .wslot-detail{border-top:1px solid var(--line);margin-top:10px;padding-top:10px;}
@@ -152,7 +152,7 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 .pfill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s ease;}
 .qnum{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-align:right;margin:6px 0 20px;}
 .qhint{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);text-align:center;margin-bottom:14px;}
-.qword-en{font-family:'Playfair Display',serif;font-size:44px;line-height:1;text-align:center;}
+.qword-en{font-family:'Playfair Display',serif;font-size:44px;line-height:1;text-align:center;color:#253761;}
 .qword-uk{font-family:'Playfair Display',serif;font-size:32px;font-style:italic;color:var(--sage);text-align:center;}
 .qword-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;}
 .qphon{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px;}
@@ -327,4 +327,4 @@ main{width:100%;max-width:700px;padding:24px 24px 80px;display:flex;flex-directi
 .level-btn,.lang-btn{font-family:'DM Mono',monospace;font-size:11px;padding:5px 10px;border:1.5px solid var(--line);border-radius:4px;background:white;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.04em;}
 .level-btn:hover,.lang-btn:hover{border-color:var(--gold);color:var(--ink);}
 .level-btn.active,.lang-btn.active{background:var(--ink);border-color:var(--ink);color:white;}
-
+
